@@ -1,0 +1,172 @@
+/* AI Hub Pro - Content Script Styles */
+
+#ai-hub-pro-overlay {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 500px;
+    height: 600px;
+    background: #09090b;
+    border: 1px solid #27272a;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 2147483646;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.ai-hub-overlay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
+    cursor: grab;
+    user-select: none;
+}
+
+.ai-hub-overlay-header:active {
+    cursor: grabbing;
+}
+
+.ai-hub-overlay-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-hub-logo {
+    background: #ccff00;
+    color: #000;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 4px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+}
+
+.ai-hub-name {
+    color: #fafafa;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ai-hub-overlay-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ai-hub-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #71717a;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.ai-hub-btn:hover {
+    background: #27272a;
+    color: #fafafa;
+}
+
+.ai-hub-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ai-hub-close:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.ai-hub-overlay-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-hub-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+}
+
+.ai-hub-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #09090b;
+    color: #71717a;
+    font-size: 13px;
+}
+
+.ai-hub-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #27272a;
+    border-top-color: #ccff00;
+    border-radius: 50%;
+    animation: ai-hub-spin 0.8s linear infinite;
+}
+
+@keyframes ai-hub-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ai-hub-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, #27272a 50%);
+    border-radius: 0 0 16px 0;
+}
+
+.ai-hub-resize-handle:hover {
+    background: linear-gradient(135deg, transparent 50%, #ccff00 50%);
+}
+
+/* Notification */
+.ai-hub-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #18181b;
+    color: #fafafa;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid #27272a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 2147483647;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.ai-hub-notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

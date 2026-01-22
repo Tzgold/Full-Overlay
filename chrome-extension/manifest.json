@@ -1,0 +1,46 @@
+{
+    "manifest_version": 3,
+    "name": "AI Hub Pro",
+    "version": "1.0.0",
+    "description": "Your central hub for top AI tools.",
+    "permissions": [
+        "storage",
+        "tabs",
+        "activeTab",
+        "scripting"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "commands": {
+        "toggle-overlay": {
+            "suggested_key": {
+                "default": "Alt+A"
+            },
+            "description": "Show/Toggle AI tool overlay"
+        },
+        "hide-overlay": {
+            "suggested_key": {
+                "default": "Alt+H"
+            },
+            "description": "Hide AI tool overlay"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "css": [
+                "content.css"
+            ],
+            "run_at": "document_end"
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+
+{
+  "manifest_version": 3,
+  "name": "AI Hub Pro",
+  "version": "1.0.0",
+  "description": "Your central hub for top AI tools.",
+  "permissions": ["storage", "tabs"],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "https://picsum.photos/16",
+      "48": "https://picsum.photos/48",
+      "128": "https://picsum.photos/128"
+    }
+  },
+  "icons": {
+    "16": "https://picsum.photos/16",
+    "48": "https://picsum.photos/48",
+    "128": "https://picsum.photos/128"
+  }
+}
