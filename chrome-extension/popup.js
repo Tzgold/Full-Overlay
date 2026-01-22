@@ -173,8 +173,8 @@ function renderHeader() {
     return `
     <header class="header">
       <div>
-        <h1 class="header-title">AI HUB <span class="accent" style="color: ${state.accentColor}">PRO</span></h1>
-        <p class="header-subtitle">Unified Command</p>
+        <h1 class="header-title">OVERLAY</h1>
+        <p class="header-subtitle">AI, right where you work</p>
       </div>
       <button class="settings-btn" id="settingsBtn">
         ${icons.settings}
