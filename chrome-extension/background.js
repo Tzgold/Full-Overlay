@@ -1,7 +1,21 @@
 // AI Hub Pro - Background Service Worker
 
 const STORAGE_KEY = 'ai_hub_pro_settings_v3';
-let activeWindowId = null;
+const WINDOW_ID_KEY = 'overlay_active_window_id';
+
+// Helper to get/set active window ID
+async function getActiveWindowId() {
+    const result = await chrome.storage.local.get([WINDOW_ID_KEY]);
+    return result[WINDOW_ID_KEY];
+}
+
+async function setActiveWindowId(id) {
+    if (id === null) {
+        await chrome.storage.local.remove([WINDOW_ID_KEY]);
+    } else {
+        await chrome.storage.local.set({ [WINDOW_ID_KEY]: id });
+    }
+}
 
 // Listen for keyboard commands
 chrome.commands.onCommand.addListener(async (command) => {
@@ -38,6 +52,8 @@ chrome.commands.onCommand.addListener(async (command) => {
         }
 
         // Check if window exists
+        const activeWindowId = await getActiveWindowId();
+
         if (activeWindowId) {
             try {
                 const win = await chrome.windows.get(activeWindowId);
@@ -51,8 +67,8 @@ chrome.commands.onCommand.addListener(async (command) => {
                 }
                 return;
             } catch (e) {
-                // Window doesn't exist anymore (user closed it manually)
-                activeWindowId = null;
+                // Window doesn't exist anymore (user closed it manually or browser restart)
+                await setActiveWindowId(null);
             }
         }
 
@@ -87,7 +103,15 @@ chrome.commands.onCommand.addListener(async (command) => {
             focused: true
         });
 
-        activeWindowId = win.id;
+        await setActiveWindowId(win.id);
+    }
+});
+
+// Clean up when window is closed
+chrome.windows.onRemoved.addListener(async (windowId) => {
+    const activeWindowId = await getActiveWindowId();
+    if (windowId === activeWindowId) {
+        await setActiveWindowId(null);
     }
 });
 
