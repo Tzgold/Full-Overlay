@@ -1,93 +1,79 @@
 // AI Hub Pro - Background Service Worker
 
 const STORAGE_KEY = 'ai_hub_pro_settings_v3';
+let activeWindowId = null;
 
 // Listen for keyboard commands
 chrome.commands.onCommand.addListener(async (command) => {
     console.log('Command received:', command);
 
-    // Get the active tab
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    const tab = tabs[0];
-
-    if (!tab || !tab.id) {
-        console.log('No active tab found');
-        return;
-    }
-
-    // Skip chrome:// and other restricted pages
-    if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://') || tab.url?.startsWith('edge://')) {
-        console.log('Restricted page, skipping');
-        return;
-    }
-
     if (command === 'toggle-overlay') {
-        // Get the selected tool URL from storage
         const result = await chrome.storage.local.get([STORAGE_KEY]);
         const settings = result[STORAGE_KEY];
 
-        console.log('Settings:', settings);
+        if (!settings || !settings.selectedToolUrl) {
+            // Notify user to select a tool
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tabs[0] && tabs[0].id) {
+                try {
+                    // Ensure content script is ready
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tabs[0].id },
+                        files: ['content.js']
+                    });
+                    await chrome.scripting.insertCSS({
+                        target: { tabId: tabs[0].id },
+                        files: ['content.css']
+                    });
 
-        if (settings && settings.selectedToolUrl) {
-            // First, make sure content script is injected
-            try {
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ['content.js']
-                });
-                await chrome.scripting.insertCSS({
-                    target: { tabId: tab.id },
-                    files: ['content.css']
-                });
-            } catch (e) {
-                // Script might already be injected, that's ok
-                console.log('Script injection:', e.message);
+                    await chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'show-notification',
+                        message: 'Please select a Quick Tool first! Click the pin icon in the extension popup.'
+                    });
+                } catch (e) {
+                    console.error('Notification error:', e);
+                }
             }
+            return;
+        }
 
-            // Send message to content script
+        // Check if window exists
+        if (activeWindowId) {
             try {
-                await chrome.tabs.sendMessage(tab.id, {
-                    action: 'toggle-overlay',
-                    url: settings.selectedToolUrl,
-                    toolName: settings.selectedToolName || 'AI Tool'
-                });
-                console.log('Message sent successfully');
-            } catch (e) {
-                console.error('Error sending message:', e);
-            }
-        } else {
-            // If no tool selected, try to show notification
-            try {
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    files: ['content.js']
-                });
-                await chrome.scripting.insertCSS({
-                    target: { tabId: tab.id },
-                    files: ['content.css']
-                });
-            } catch (e) {
-                console.log('Script injection:', e.message);
-            }
+                const win = await chrome.windows.get(activeWindowId);
 
-            try {
-                await chrome.tabs.sendMessage(tab.id, {
-                    action: 'show-notification',
-                    message: 'Please select a Quick Tool from AI Hub Pro first! Click the pin icon next to any tool.'
-                });
+                // If window is focused, minimize it
+                if (win.focused) {
+                    await chrome.windows.update(activeWindowId, { state: 'minimized' });
+                } else {
+                    // If not focused (or minimized), bring to front
+                    await chrome.windows.update(activeWindowId, { focused: true, state: 'normal' });
+                }
+                return;
             } catch (e) {
-                console.error('Error sending notification:', e);
+                // Window doesn't exist anymore (user closed it manually)
+                activeWindowId = null;
             }
         }
-    } else if (command === 'hide-overlay') {
-        try {
-            await chrome.tabs.sendMessage(tab.id, {
-                action: 'hide-overlay'
-            });
-            console.log('Hide message sent');
-        } catch (e) {
-            console.error('Error hiding overlay:', e);
-        }
+
+        // Create new window
+        const width = 550;
+        const height = 700;
+
+        // Calculate center (approximate, as we don't have screen dimensions in SW easily, 
+        // but we can default to some reasonable offset or let OS decide, 
+        // or use the current window to guess)
+        // chrome.windows.create allows 'left' and 'top'.
+
+        const win = await chrome.windows.create({
+            url: settings.selectedToolUrl,
+            type: 'popup',
+            width: width,
+            height: height,
+            focused: true
+        });
+
+        activeWindowId = win.id;
     }
 });
 
@@ -105,5 +91,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 });
-
-console.log('AI Hub Pro background script loaded');

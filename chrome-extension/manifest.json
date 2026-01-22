@@ -21,12 +21,6 @@
                 "default": "Alt+A"
             },
             "description": "Show/Toggle AI tool overlay"
-        },
-        "hide-overlay": {
-            "suggested_key": {
-                "default": "Alt+H"
-            },
-            "description": "Hide AI tool overlay"
         }
     },
     "content_scripts": [

@@ -336,10 +336,7 @@ function renderModal() {
                   <span class="shortcut-name">Show/Toggle Quick Tool Overlay</span>
                   <span class="shortcut-key">Alt + A</span>
                 </div>
-                <div class="shortcut-item">
-                  <span class="shortcut-name">Hide Overlay</span>
-                  <span class="shortcut-key">Alt + H</span>
-                </div>
+
               </div>
             </section>
             
