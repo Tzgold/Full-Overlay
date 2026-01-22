@@ -172,9 +172,12 @@ function renderApp() {
 function renderHeader() {
     return `
     <header class="header">
-      <div>
-        <h1 class="header-title">OVERLAY</h1>
-        <p class="header-subtitle">AI, right where you work</p>
+      <div style="display: flex; align-items: center;">
+        <img src="icons/icon128.png" class="header-logo" alt="Overlay Logo">
+        <div>
+            <h1 class="header-title">OVERLAY</h1>
+            <p class="header-subtitle">AI, right where you work</p>
+        </div>
       </div>
       <button class="settings-btn" id="settingsBtn">
         ${icons.settings}

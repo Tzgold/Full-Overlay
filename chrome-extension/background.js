@@ -59,17 +59,31 @@ chrome.commands.onCommand.addListener(async (command) => {
         // Create new window
         const width = 550;
         const height = 700;
+        let left = 100;
+        let top = 100;
 
-        // Calculate center (approximate, as we don't have screen dimensions in SW easily, 
-        // but we can default to some reasonable offset or let OS decide, 
-        // or use the current window to guess)
-        // chrome.windows.create allows 'left' and 'top'.
+        try {
+            // Get display info to center the window
+            const displayInfo = await chrome.system.display.getInfo();
+            if (displayInfo.length > 0) {
+                // Use primary display or the first one
+                const primaryDisplay = displayInfo.find(d => d.isPrimary) || displayInfo[0];
+                const workArea = primaryDisplay.workArea;
+
+                left = Math.round(workArea.left + (workArea.width - width) / 2);
+                top = Math.round(workArea.top + (workArea.height - height) / 2);
+            }
+        } catch (e) {
+            console.log('Error getting display info:', e);
+        }
 
         const win = await chrome.windows.create({
             url: settings.selectedToolUrl,
             type: 'popup',
             width: width,
             height: height,
+            left: left,
+            top: top,
             focused: true
         });
 
