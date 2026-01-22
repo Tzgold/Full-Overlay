@@ -79,7 +79,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 
         const win = await chrome.windows.create({
             url: settings.selectedToolUrl,
-            type: 'popup',
+            type: 'panel',
             width: width,
             height: height,
             left: left,
