@@ -297,7 +297,7 @@ function renderFooter() {
         </span>
       </div>
       <button class="launch-btn ${launchEnabledClass}" id="launchAllBtn" ${disabledAttr}>
-        <span>Launch Selected Tools</span>
+        <span>Desktop Dashboard</span>
         ${icons.arrowRight}
       </button>
     </div>
@@ -402,14 +402,10 @@ function attachEventListeners() {
         renderApp();
     });
 
-    // Launch all
+    // Desktop Dashboard
     document.getElementById('launchAllBtn')?.addEventListener('click', () => {
         if (!state.isExtensionEnabled) return;
-        AI_TOOLS.forEach(t => {
-            if (state.enabledTools[t.id]) {
-                openUrl(t.url);
-            }
-        });
+        chrome.tabs.create({ url: 'popup.html' });
     });
 
     // Category toggles
