@@ -2,7 +2,7 @@
 
 **AI, right where you work.**
 
-Overlay is a powerful Chrome extension that brings your favorite AI tools (ChatGPT, Claude, Gemini, DeepSeek, and more) directly into your workflow with a single keystroke. No more tab switching—just seamless intelligence.
+Overlay is a powerful Chrome extension that brings your favorite AI tools (ChatGPT, Claude, Gemini, DeepSeek, and more) directly into your workflow with a single keystroke. No more tab switching just seamless intelligence.
 
 ![Overlay Logo](chrome-extension/icons/icon128.png)
 
