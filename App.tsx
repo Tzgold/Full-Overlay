@@ -56,6 +56,7 @@ const ToggleSwitch: React.FC<{ enabled: boolean; onToggle: (e: React.MouseEvent)
 };
 
 // Power Button
+// make some changes 
 const MasterPowerButton: React.FC<{ enabled: boolean; onToggle: () => void; accentColor: string }> = ({ enabled, onToggle, accentColor }) => (
   <div className="flex flex-col items-center justify-center py-1">
     <button
