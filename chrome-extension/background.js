@@ -32,32 +32,13 @@ chrome.commands.onCommand.addListener(async (command) => {
             const settings = result[STORAGE_KEY];
 
             if (!settings || !settings.selectedToolUrl) {
-                // Notify user to select a tool
-                const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (tabs[0] && tabs[0].id) {
-                    try {
-                        // Ensure content script is ready
-                        await chrome.scripting.executeScript({
-                            target: { tabId: tabs[0].id },
-                            files: ['content.js']
-                        });
-                        await chrome.scripting.insertCSS({
-                            target: { tabId: tabs[0].id },
-                            files: ['content.css']
-                        });
-
-                        await chrome.tabs.sendMessage(tabs[0].id, {
-                            action: 'show-notification',
-                            message: 'Please select a Quick Tool first! Click the pin icon in the extension popup.'
-                        });
-                    } catch (e) {
-                        console.error('Notification error:', e);
-                    }
-                }
+                // No tool selected — just log it, no injection needed
+                console.warn('No Quick Tool selected. User needs to pick one from the popup.');
+                isProcessing = false;
                 return;
             }
 
-            // Check if window exists
+            // Check if window already exists
             const activeWindowId = await getActiveWindowId();
 
             if (activeWindowId) {
@@ -73,7 +54,7 @@ chrome.commands.onCommand.addListener(async (command) => {
                     }
                     return;
                 } catch (e) {
-                    // Window doesn't exist anymore (user closed it manually or browser restart)
+                    // Window doesn't exist anymore
                     await setActiveWindowId(null);
                 }
             }
@@ -85,18 +66,15 @@ chrome.commands.onCommand.addListener(async (command) => {
             let top = 100;
 
             try {
-                // Get display info to center the window
                 const displayInfo = await chrome.system.display.getInfo();
                 if (displayInfo.length > 0) {
-                    // Use primary display or the first one
                     const primaryDisplay = displayInfo.find(d => d.isPrimary) || displayInfo[0];
                     const workArea = primaryDisplay.workArea;
-
                     left = Math.round(workArea.left + (workArea.width - width) / 2);
                     top = Math.round(workArea.top + (workArea.height - height) / 2);
                 }
             } catch (e) {
-                console.log('Error getting display info:', e);
+                console.log('Display info unavailable, using defaults');
             }
 
             const win = await chrome.windows.create({
@@ -110,6 +88,8 @@ chrome.commands.onCommand.addListener(async (command) => {
             });
 
             await setActiveWindowId(win.id);
+        } catch (err) {
+            console.error('Error in toggle-overlay:', err);
         } finally {
             isProcessing = false;
         }
@@ -121,20 +101,5 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
     const activeWindowId = await getActiveWindowId();
     if (windowId === activeWindowId) {
         await setActiveWindowId(null);
-    }
-});
-
-// Listen for messages from popup to set selected tool
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'set-selected-tool') {
-        chrome.storage.local.get([STORAGE_KEY], (result) => {
-            const settings = result[STORAGE_KEY] || {};
-            settings.selectedToolUrl = request.url;
-            settings.selectedToolName = request.name;
-            chrome.storage.local.set({ [STORAGE_KEY]: settings }, () => {
-                sendResponse({ success: true });
-            });
-        });
-        return true;
     }
 });

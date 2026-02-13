@@ -62,7 +62,7 @@ const MasterPowerButton: React.FC<{ enabled: boolean; onToggle: () => void; acce
     <button
       onClick={onToggle}
       className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border border-zinc-800 group ${enabled ? 'active:scale-90' : 'bg-zinc-900 hover:bg-zinc-800 active:scale-90'}`}
-      style={{ 
+      style={{
         backgroundColor: enabled ? accentColor : undefined,
         boxShadow: enabled ? `0 0 12px ${accentColor}4d` : undefined
       }}
@@ -78,7 +78,16 @@ const MasterPowerButton: React.FC<{ enabled: boolean; onToggle: () => void; acce
 );
 
 // Tool Item
-const ToolItem: React.FC<{ tool: AITool; enabled: boolean; isHighlighted: boolean; onToggle: (id: string) => void; onLaunch: (id: string, url: string) => void; masterDisabled: boolean; accentColor: string }> = ({ tool, enabled, isHighlighted, onToggle, onLaunch, masterDisabled, accentColor }) => {
+const ToolItem: React.FC<{
+  tool: AITool;
+  enabled: boolean;
+  isHighlighted: boolean;
+  onToggle: (id: string) => void;
+  onLaunch: (id: string, url: string) => void;
+  onDelete?: (id: string) => void;
+  masterDisabled: boolean;
+  accentColor: string;
+}> = ({ tool, enabled, isHighlighted, onToggle, onLaunch, onDelete, masterDisabled, accentColor }) => {
   const [copied, setCopied] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tool.id, disabled: masterDisabled });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : 'auto' };
@@ -102,16 +111,21 @@ const ToolItem: React.FC<{ tool: AITool; enabled: boolean; isHighlighted: boolea
         </div>
         <div className="overflow-hidden">
           <h3 className="text-[13px] font-semibold text-zinc-200 truncate leading-none mb-1">{tool.name}</h3>
-          <p className="text-[9px] text-zinc-600 font-medium truncate uppercase tracking-widest">{tool.description}</p>
+          <p className="text-[9px] text-zinc-600 font-medium truncate uppercase tracking-widest">{tool.isCustom ? 'User Added' : tool.description}</p>
         </div>
       </div>
       <div className="flex items-center space-x-1 ml-2 shrink-0">
         <button onClick={handleCopy} className={`p-1 rounded-md transition-all ${copied ? '' : 'text-zinc-700 hover:text-zinc-200 hover:bg-zinc-800'}`} style={{ color: copied ? accentColor : undefined }} title="Copy URL">
-          {copied ? <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg> : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>}
+          {copied ? <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg> : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>}
         </button>
         <button onClick={() => onLaunch(tool.id, tool.url)} className="p-1 rounded-md hover:bg-zinc-800 text-zinc-600 hover:text-zinc-200 transition-all" title="Launch Tool">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
         </button>
+        {tool.isCustom && onDelete && (
+          <button onClick={() => onDelete(tool.id)} className="p-1 rounded-md hover:bg-red-500/10 text-zinc-700 hover:text-red-500 transition-all" title="Delete Tool">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </button>
+        )}
         <ToggleSwitch enabled={enabled} onToggle={(e) => { e.stopPropagation(); onToggle(tool.id); }} accentColor={accentColor} />
       </div>
     </div>
@@ -120,24 +134,41 @@ const ToolItem: React.FC<{ tool: AITool; enabled: boolean; isHighlighted: boolea
 
 const App: React.FC = () => {
   const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({});
-  const [toolOrder, setToolOrder] = useState<string[]>(AI_TOOLS.map(t => t.id));
+  const [toolOrder, setToolOrder] = useState<string[]>([]);
   const [isExtensionEnabled, setIsExtensionEnabled] = useState(true);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [accentColor, setAccentColor] = useState('#ccff00');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [preSelectedCategory, setPreSelectedCategory] = useState<ToolCategory | null>(null);
+  const [customTools, setCustomTools] = useState<AITool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
-  const sortedTools = useMemo(() => [...toolOrder].map(id => AI_TOOLS.find(t => t.id === id)!).filter(Boolean), [toolOrder]);
+
+  const allAvailableTools = useMemo(() => [...AI_TOOLS, ...customTools], [customTools]);
+
+  const sortedTools = useMemo(() => {
+    return toolOrder
+      .map(id => allAvailableTools.find(t => t.id === id)!)
+      .filter(Boolean);
+  }, [toolOrder, allAvailableTools]);
+
   const categorizedTools = useMemo(() => {
     const groups: Record<ToolCategory, AITool[]> = { 'Writing & Search': [], 'Image Generation': [], 'Video Editing': [], 'Productivity': [], 'General': [] };
     sortedTools.forEach(tool => groups[tool.category].push(tool));
     return groups;
   }, [sortedTools]);
 
-  const saveSettings = useCallback((newEnabled: Record<string, boolean>, newOrder: string[], masterEnabled: boolean, collapsed: Record<string, boolean>, color: string) => {
-    const settings = { enabledTools: newEnabled, toolOrder: newOrder, isExtensionEnabled: masterEnabled, collapsedCategories: collapsed, accentColor: color };
+  const saveSettings = useCallback((newEnabled: Record<string, boolean>, newOrder: string[], masterEnabled: boolean, collapsed: Record<string, boolean>, color: string, custom: AITool[]) => {
+    const settings = {
+      enabledTools: newEnabled,
+      toolOrder: newOrder,
+      isExtensionEnabled: masterEnabled,
+      collapsedCategories: collapsed,
+      accentColor: color,
+      customTools: custom
+    };
     try {
       if (typeof chrome !== 'undefined' && chrome.storage?.local) chrome.storage.local.set({ [SETTINGS_KEY]: settings });
       else localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -146,7 +177,7 @@ const App: React.FC = () => {
 
   const openUrl = useCallback((url: string) => {
     if (!isExtensionEnabled) return;
-    
+
     // Launch as a popup window so the user stays on their current page
     if (typeof chrome !== 'undefined' && chrome.windows?.create) {
       chrome.windows.create({
@@ -164,8 +195,8 @@ const App: React.FC = () => {
 
   const handleLaunchAll = useCallback(() => {
     if (!isExtensionEnabled) return;
-    AI_TOOLS.forEach(t => enabledTools[t.id] && openUrl(t.url));
-  }, [isExtensionEnabled, enabledTools, openUrl]);
+    allAvailableTools.forEach(t => enabledTools[t.id] && openUrl(t.url));
+  }, [isExtensionEnabled, enabledTools, openUrl, allAvailableTools]);
 
   const handleToggleMaster = useCallback(() => {
     const val = !isExtensionEnabled;
@@ -188,8 +219,18 @@ const App: React.FC = () => {
           setEnabledTools(settings.enabledTools || {});
           setIsExtensionEnabled(settings.isExtensionEnabled !== undefined ? settings.isExtensionEnabled : true);
           setAccentColor(settings.accentColor || '#ccff00');
-          if (settings.toolOrder?.length > 0) setToolOrder(settings.toolOrder);
+          const custom = settings.customTools || [];
+          setCustomTools(custom);
+
+          if (settings.toolOrder?.length > 0) {
+            setToolOrder(settings.toolOrder);
+          } else {
+            setToolOrder([...AI_TOOLS, ...custom].map(t => t.id));
+          }
+
           if (settings.collapsedCategories) setCollapsedCategories(settings.collapsedCategories);
+        } else {
+          setToolOrder(AI_TOOLS.map(t => t.id));
         }
       } catch (e) { console.error(e); } finally { setIsLoading(false); }
     };
@@ -217,9 +258,9 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleToggleMaster, handleLaunchAll]);
 
-  const handleToggleCategory = (cat: string) => { const next = { ...collapsedCategories, [cat]: !collapsedCategories[cat] }; setCollapsedCategories(next); saveSettings(enabledTools, toolOrder, isExtensionEnabled, next, accentColor); };
-  const handleToggle = (id: string) => { const next = { ...enabledTools, [id]: !enabledTools[id] }; setEnabledTools(next); saveSettings(next, toolOrder, isExtensionEnabled, collapsedCategories, accentColor); };
-  const handleColorChange = (color: string) => { setAccentColor(color); saveSettings(enabledTools, toolOrder, isExtensionEnabled, collapsedCategories, color); };
+  const handleToggleCategory = (cat: string) => { const next = { ...collapsedCategories, [cat]: !collapsedCategories[cat] }; setCollapsedCategories(next); saveSettings(enabledTools, toolOrder, isExtensionEnabled, next, accentColor, customTools); };
+  const handleToggle = (id: string) => { const next = { ...enabledTools, [id]: !enabledTools[id] }; setEnabledTools(next); saveSettings(next, toolOrder, isExtensionEnabled, collapsedCategories, accentColor, customTools); };
+  const handleColorChange = (color: string) => { setAccentColor(color); saveSettings(enabledTools, toolOrder, isExtensionEnabled, collapsedCategories, color, customTools); };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -228,8 +269,37 @@ const App: React.FC = () => {
       const newIdx = toolOrder.indexOf(over.id as string);
       const nextOrder = arrayMove(toolOrder, oldIdx, newIdx);
       setToolOrder(nextOrder);
-      saveSettings(enabledTools, nextOrder, isExtensionEnabled, collapsedCategories, accentColor);
+      saveSettings(enabledTools, nextOrder, isExtensionEnabled, collapsedCategories, accentColor, customTools);
     }
+  };
+
+  const handleAddTool = (name: string, url: string, category: ToolCategory = 'General') => {
+    const id = `custom-${Date.now()}`;
+    const newTool: AITool = {
+      id,
+      name,
+      url,
+      description: 'Custom added tool',
+      category: category,
+      isCustom: true,
+      icon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`
+    };
+    const nextCustom = [...customTools, newTool];
+    const nextOrder = [...toolOrder, id];
+    setCustomTools(nextCustom);
+    setToolOrder(nextOrder);
+    saveSettings(enabledTools, nextOrder, isExtensionEnabled, collapsedCategories, accentColor, nextCustom);
+  };
+
+  const handleDeleteTool = (id: string) => {
+    const nextCustom = customTools.filter(t => t.id !== id);
+    const nextOrder = toolOrder.filter(tid => tid !== id);
+    const nextEnabled = { ...enabledTools };
+    delete nextEnabled[id];
+    setCustomTools(nextCustom);
+    setToolOrder(nextOrder);
+    setEnabledTools(nextEnabled);
+    saveSettings(nextEnabled, nextOrder, isExtensionEnabled, collapsedCategories, accentColor, nextCustom);
   };
 
   if (isLoading) return <div className="flex h-[600px] w-full items-center justify-center bg-[#09090b]"><div className="h-6 w-6 border-2 border-zinc-800 border-t-[#ccff00] rounded-full animate-spin"></div></div>;
@@ -242,9 +312,14 @@ const App: React.FC = () => {
             <h1 className="text-lg font-bold tracking-tight text-white">AI HUB <span style={{ color: accentColor }} className="font-black italic">PRO</span></h1>
             <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-0.5">Unified Command</p>
           </div>
-          <button onClick={() => setIsSettingsOpen(true)} className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button onClick={() => setIsSettingsOpen(true)} className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors" title="Add New Tool">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="h-7 w-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors" title="System Settings">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+          </div>
         </header>
 
         <div className={`flex-1 overflow-y-auto pr-1 -mr-1 mb-2 custom-scrollbar transition-opacity duration-500 ${!isExtensionEnabled ? 'opacity-20 pointer-events-none' : ''}`}>
@@ -255,16 +330,25 @@ const App: React.FC = () => {
                 const isCollapsed = !!collapsedCategories[category];
                 return (
                   <div key={category} className="space-y-2">
-                    <button onClick={() => handleToggleCategory(category)} className="w-full flex items-center justify-between group transition-all">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 group-hover:text-zinc-400 transition-colors">{category}</span>
-                        <div className="h-px w-4 bg-zinc-800 group-hover:bg-zinc-700"></div>
-                      </div>
-                      <svg className={`w-3 h-3 text-zinc-800 transition-transform duration-300 ${isCollapsed ? '-rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
+                    <div className="flex items-center justify-between group/cat">
+                      <button onClick={() => handleToggleCategory(category)} className="flex-1 flex items-center justify-between transition-all">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 group-hover/cat:text-zinc-400 transition-colors">{category}</span>
+                          <div className="h-px w-4 bg-zinc-800 group-hover/cat:bg-zinc-700"></div>
+                        </div>
+                        <svg className={`w-3 h-3 text-zinc-800 transition-transform duration-300 ${isCollapsed ? '-rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setPreSelectedCategory(category); setIsSettingsOpen(true); }}
+                        className="ml-2 p-1 rounded-md bg-zinc-900/50 border border-zinc-800/50 text-zinc-700 hover:text-white hover:bg-zinc-800 transition-all opacity-0 group-hover/cat:opacity-100"
+                        title={`Add Tool to ${category}`}
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                      </button>
+                    </div>
                     {!isCollapsed && (
                       <SortableContext items={tools.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-1.5">{tools.map(tool => <ToolItem key={tool.id} tool={tool} enabled={!!enabledTools[tool.id]} isHighlighted={highlightedId === tool.id} onToggle={handleToggle} onLaunch={(id, url) => { setHighlightedId(id); openUrl(url); setTimeout(() => setHighlightedId(null), 1200); }} masterDisabled={!isExtensionEnabled} accentColor={accentColor} />)}</div>
+                        <div className="space-y-1.5">{tools.map(tool => <ToolItem key={tool.id} tool={tool} enabled={!!enabledTools[tool.id]} isHighlighted={highlightedId === tool.id} onToggle={handleToggle} onLaunch={(id, url) => { setHighlightedId(id); openUrl(url); setTimeout(() => setHighlightedId(null), 1200); }} onDelete={handleDeleteTool} masterDisabled={!isExtensionEnabled} accentColor={accentColor} />)}</div>
                       </SortableContext>
                     )}
                   </div>
@@ -276,16 +360,16 @@ const App: React.FC = () => {
 
         <div className="mt-auto space-y-2 pt-2 border-t border-zinc-900/50">
           <div className="flex items-center justify-between gap-2">
-            <button disabled={!isExtensionEnabled} onClick={() => { const next = AI_TOOLS.reduce((a, t) => ({...a, [t.id]: true}), {}); setEnabledTools(next); saveSettings(next, toolOrder, isExtensionEnabled, collapsedCategories, accentColor); }} className="flex-1 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-300 bg-transparent border border-zinc-900 hover:border-zinc-800 rounded transition-all disabled:opacity-20">SELECT ALL</button>
-            <button disabled={!isExtensionEnabled} onClick={() => { setEnabledTools({}); saveSettings({}, toolOrder, isExtensionEnabled, collapsedCategories, accentColor); }} className="flex-1 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-300 bg-transparent border border-zinc-900 hover:border-zinc-800 rounded transition-all disabled:opacity-20">CLEAR ALL</button>
+            <button disabled={!isExtensionEnabled} onClick={() => { const next = allAvailableTools.reduce((a, t) => ({ ...a, [t.id]: true }), {}); setEnabledTools(next); saveSettings(next, toolOrder, isExtensionEnabled, collapsedCategories, accentColor, customTools); }} className="flex-1 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-300 bg-transparent border border-zinc-900 hover:border-zinc-800 rounded transition-all disabled:opacity-20">SELECT ALL</button>
+            <button disabled={!isExtensionEnabled} onClick={() => { setEnabledTools({}); saveSettings({}, toolOrder, isExtensionEnabled, collapsedCategories, accentColor, customTools); }} className="flex-1 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-300 bg-transparent border border-zinc-900 hover:border-zinc-800 rounded transition-all disabled:opacity-20">CLEAR ALL</button>
           </div>
           <MasterPowerButton enabled={isExtensionEnabled} onToggle={handleToggleMaster} accentColor={accentColor} />
-          <button 
-            disabled={!isExtensionEnabled} 
-            onClick={handleLaunchAll} 
-            className="group w-full h-10 font-bold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 active:scale-[0.98]" 
-            style={{ 
-              backgroundColor: isExtensionEnabled ? 'white' : '#18181b', 
+          <button
+            disabled={!isExtensionEnabled}
+            onClick={handleLaunchAll}
+            className="group w-full h-10 font-bold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 active:scale-[0.98]"
+            style={{
+              backgroundColor: isExtensionEnabled ? 'white' : '#18181b',
               color: isExtensionEnabled ? 'black' : '#3f3f46',
               boxShadow: isExtensionEnabled ? '0 4px 12px rgba(255,255,255,0.05)' : undefined
             }}
@@ -299,20 +383,51 @@ const App: React.FC = () => {
       <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="System Settings">
         <div className="space-y-6">
           <section>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Add Custom Tool</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const name = (form.elements.namedItem('toolName') as HTMLInputElement).value;
+              const url = (form.elements.namedItem('toolUrl') as HTMLInputElement).value;
+              const category = (form.elements.namedItem('toolCategory') as HTMLSelectElement).value as ToolCategory;
+              if (name && url) {
+                handleAddTool(name, url, category);
+                form.reset();
+                setPreSelectedCategory(null);
+              }
+            }} className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input name="toolName" type="text" placeholder="Tool Name (e.g. DeepL)" required className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-zinc-600 transition-colors" />
+                <select name="toolCategory" defaultValue={preSelectedCategory || "General"} className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-zinc-600 transition-colors text-zinc-400">
+                  <option value="Writing & Search">Writing & Search</option>
+                  <option value="Image Generation">Image Generation</option>
+                  <option value="Video Editing">Video Editing</option>
+                  <option value="Productivity">Productivity</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <input name="toolUrl" type="url" placeholder="https://..." required className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-zinc-600 transition-colors" />
+                <button type="submit" className="px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all" style={{ backgroundColor: accentColor, color: 'black' }}>Add</button>
+              </div>
+            </form>
+          </section>
+
+          <section>
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Accent Theme</h3>
             <div className="flex flex-wrap gap-2">
               {ACCENT_COLORS.map(c => (
-                <button 
-                  key={c.value} 
-                  onClick={() => handleColorChange(c.value)} 
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === c.value ? 'border-white scale-110' : 'border-transparent'}`} 
-                  style={{ backgroundColor: c.value }} 
+                <button
+                  key={c.value}
+                  onClick={() => handleColorChange(c.value)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === c.value ? 'border-white scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: c.value }}
                   title={c.name}
                 />
               ))}
             </div>
           </section>
-          
+
           <section>
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">Keyboard Shortcuts</h3>
             <div className="space-y-2">

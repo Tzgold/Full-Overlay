@@ -8,6 +8,7 @@ export interface AITool {
   description: string;
   category: ToolCategory;
   icon?: string;
+  isCustom?: boolean;
 }
 
 export interface AppSettings {
@@ -16,4 +17,5 @@ export interface AppSettings {
   toolOrder: string[];
   collapsedCategories: Record<string, boolean>;
   accentColor: string;
+  customTools: AITool[];
 }
