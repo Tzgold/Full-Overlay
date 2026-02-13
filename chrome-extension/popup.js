@@ -305,10 +305,7 @@ function renderToolItem(tool) {
           ${iconContent}
         </div>
         <div class="tool-info">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <h3 class="tool-name">${tool.name}</h3>
-            ${isSelected ? `<span class="quick-tool-badge" style="background-color: ${state.accentColor}">★ QUICK</span>` : ''}
-          </div>
+          <h3 class="tool-name">${tool.name}</h3>
           <p class="tool-description">${tool.isCustom ? 'User Added' : tool.description}</p>
         </div>
       </div>

@@ -426,15 +426,15 @@ body {
 }
 
 .fav-toggle:hover {
-    color: #fbbf24;
-    background-color: rgba(251, 191, 36, 0.1);
-    border-color: rgba(251, 191, 36, 0.3);
+    color: var(--accent-color, #ccff00);
+    background-color: rgba(204, 255, 0, 0.1);
+    border-color: rgba(204, 255, 0, 0.3);
     transform: scale(1.15);
 }
 
 .fav-toggle.favourite {
-    color: #fbbf24;
-    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
+    color: var(--accent-color, #ccff00);
+    filter: drop-shadow(0 0 4px rgba(204, 255, 0, 0.4));
 }
 
 .fav-toggle svg {
@@ -443,8 +443,8 @@ body {
 }
 
 .tool-item.selected-tool {
-    border-color: #fbbf24;
-    background-color: rgba(251, 191, 36, 0.05);
+    border-color: var(--accent-color, #ccff00);
+    background-color: rgba(204, 255, 0, 0.05);
 }
 
 
